@@ -58,7 +58,7 @@ def optimize_transform(A_to_C_list, B_to_C_list):
         优化后的A到B变换矩阵
     """
     # 初始猜测：使用第一组数据的结果
-    initial_A_to_B = np.linalg.inv(A_to_C_list[0]) @ B_to_C_list[0]
+    initial_A_to_B = np.linalg.inv(B_to_C_list[0]) @ A_to_C_list[0]
     initial_R = initial_A_to_B[:3, :3]
     initial_t = initial_A_to_B[:3, 3]
     initial_q = rotation_matrix_to_quaternion(initial_R)
@@ -71,7 +71,7 @@ def optimize_transform(A_to_C_list, B_to_C_list):
         transform_error, 
         x0, 
         args=(A_to_C_list, B_to_C_list),
-        method='Nelder-Mead'
+        method='BFGS'
     )
     
     # 从优化结果构建变换矩阵
@@ -112,8 +112,8 @@ if __name__ == "__main__":
     B_to_C_list = []
     
     # 真实的A到B变换矩阵（用于生成测试数据）
-    true_R = Rotation.from_euler('xyz', [30, 45, 60], degrees=True).as_matrix()
-    true_t = np.array([1.0, 2.0, 3.0])
+    true_R = Rotation.from_euler('xyz', [3.0, 4.5, 6.0], degrees=True).as_matrix()
+    true_t = np.array([10.0, 20.0, 30.0])
     true_A_to_B = np.eye(4)
     true_A_to_B[:3, :3] = true_R
     true_A_to_B[:3, 3] = true_t
@@ -123,19 +123,19 @@ if __name__ == "__main__":
         # 随机生成B到C的变换
         B_to_C = np.eye(4)
         B_to_C[:3, :3] = Rotation.random().as_matrix()
-        B_to_C[:3, 3] = np.random.rand(3) * 5
+        B_to_C[:3, 3] = np.random.rand(3) * 20
         
         # 计算对应的A到C的变换
         A_to_C = B_to_C @ true_A_to_B
         
         # 添加欧拉角噪声（角度制）
-        noise_angles = (np.random.rand(3) * 2 - 1) * 2  # 生成±2度的随机噪声
+        noise_angles = (np.random.rand(3) * 2 - 1) * 0.2  # 生成±0.2度的随机噪声
         current_euler = Rotation.from_matrix(A_to_C[:3, :3]).as_euler('xyz', degrees=True)
         noisy_euler = current_euler + noise_angles
         A_to_C[:3, :3] = Rotation.from_euler('xyz', noisy_euler, degrees=True).as_matrix()
         
         # 添加平移噪声
-        noise_translation = (np.random.rand(3) * 0.1 - 0.05)  # 生成±0.05的随机噪声
+        noise_translation = (np.random.rand(3) * 2 - 1) * 2  # 生成±2的随机噪声
         A_to_C[:3, 3] += noise_translation
         
         A_to_C_list.append(A_to_C)
@@ -156,13 +156,13 @@ if __name__ == "__main__":
     print(f"Roll (x): {euler_errors[0]:.4f}°")
     print(f"Pitch (y): {euler_errors[1]:.4f}°")
     print(f"Yaw (z): {euler_errors[2]:.4f}°")
-    print("\n平移误差 (米):")
-    print(f"X: {translation_errors[0]:.4f}m")
-    print(f"Y: {translation_errors[1]:.4f}m")
-    print(f"Z: {translation_errors[2]:.4f}m")
+    print("\n平移误差 (mm):")
+    print(f"X: {translation_errors[0]:.4f}mm")
+    print(f"Y: {translation_errors[1]:.4f}mm")
+    print(f"Z: {translation_errors[2]:.4f}mm")
     
     # 计算总体误差
     total_rotation_error = np.linalg.norm(euler_errors)
     total_translation_error = np.linalg.norm(translation_errors)
     print(f"\n总旋转误差: {total_rotation_error:.4f}°")
-    print(f"总平移误差: {total_translation_error:.4f}m")
+    print(f"总平移误差: {total_translation_error:.4f}mm")
