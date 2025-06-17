@@ -34,8 +34,8 @@ def transform_error(x, A_to_C_list, B_to_C_list):
         predicted_A_to_C = B_to_C @ A_to_B
         
         # 计算旋转误差（欧拉角）
-        actual_euler = Rotation.from_matrix(A_to_C[:3, :3]).as_euler('xyz', degrees=True)
-        predicted_euler = Rotation.from_matrix(predicted_A_to_C[:3, :3]).as_euler('xyz', degrees=True)
+        actual_euler = Rotation.from_matrix(A_to_C[:3, :3]).as_euler('zyx', degrees=True)
+        predicted_euler = Rotation.from_matrix(predicted_A_to_C[:3, :3]).as_euler('zyx', degrees=True)
         euler_error = np.sum((actual_euler - predicted_euler) ** 2)
         
         # 计算平移误差
@@ -95,8 +95,8 @@ def calculate_6dof_error(true_RT, estimated_RT):
         translation_errors: 3个平移分量的误差
     """
     # 计算旋转误差（欧拉角，度）
-    true_euler = Rotation.from_matrix(true_RT[:3, :3]).as_euler('xyz', degrees=True)
-    estimated_euler = Rotation.from_matrix(estimated_RT[:3, :3]).as_euler('xyz', degrees=True)
+    true_euler = Rotation.from_matrix(true_RT[:3, :3]).as_euler('zyx', degrees=True)
+    estimated_euler = Rotation.from_matrix(estimated_RT[:3, :3]).as_euler('zyx', degrees=True)
     euler_errors = np.abs(true_euler - estimated_euler)
     
     # 计算平移误差
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     B_to_C_list = []
     
     # 真实的A到B变换矩阵（用于生成测试数据）
-    true_R = Rotation.from_euler('xyz', [3.0, 4.5, 6.0], degrees=True).as_matrix()
+    true_R = Rotation.from_euler('zyx', [3.0, 4.5, 6.0], degrees=True).as_matrix()
     true_t = np.array([10.0, 20.0, 30.0])
     true_A_to_B = np.eye(4)
     true_A_to_B[:3, :3] = true_R
@@ -130,9 +130,9 @@ if __name__ == "__main__":
         
         # 添加欧拉角噪声（角度制）
         noise_angles = (np.random.rand(3) * 2 - 1) * 0.2  # 生成±0.2度的随机噪声
-        current_euler = Rotation.from_matrix(A_to_C[:3, :3]).as_euler('xyz', degrees=True)
+        current_euler = Rotation.from_matrix(A_to_C[:3, :3]).as_euler('zyx', degrees=True)
         noisy_euler = current_euler + noise_angles
-        A_to_C[:3, :3] = Rotation.from_euler('xyz', noisy_euler, degrees=True).as_matrix()
+        A_to_C[:3, :3] = Rotation.from_euler('zyx', noisy_euler, degrees=True).as_matrix()
         
         # 添加平移噪声
         noise_translation = (np.random.rand(3) * 2 - 1) * 2  # 生成±2的随机噪声
